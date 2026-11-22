@@ -65,7 +65,7 @@ struct HistoryChart: View {
                 .pickerStyle(.segmented)
                 .labelsHidden()
                 .controlSize(.mini)
-                .frame(width: 180)
+                .fixedSize()
             }
 
             if mode != .health {
@@ -78,7 +78,7 @@ struct HistoryChart: View {
                     .pickerStyle(.segmented)
                     .labelsHidden()
                     .controlSize(.mini)
-                    .frame(width: 120)
+                    .fixedSize()
                     Spacer()
                     temperatureChip
                 }

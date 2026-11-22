@@ -77,7 +77,7 @@ struct WidgetContent: View {
     }
 
     private func heroColor(for snap: BatterySnapshot) -> Color {
-        PowerAccent.accent(for: snap, warn: warnThreshold, critical: criticalThreshold)
+        PowerAccent.textAccent(for: snap, warn: warnThreshold, critical: criticalThreshold)
     }
 
     private func caption(for snap: BatterySnapshot) -> String {
@@ -93,9 +93,9 @@ struct WidgetContent: View {
     private func captionColor(for snap: BatterySnapshot) -> Color {
         switch snap.state {
         case .charging:
-            return PowerAccent.green
+            return PowerAccent.greenText
         case .discharging where snap.percent <= warnThreshold:
-            return PowerAccent.accent(for: snap, warn: warnThreshold, critical: criticalThreshold)
+            return PowerAccent.textAccent(for: snap, warn: warnThreshold, critical: criticalThreshold)
         default:
             return .secondary
         }

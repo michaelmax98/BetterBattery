@@ -45,7 +45,7 @@ struct NerdStatsView: View {
     }
 
     private func adapterTile(_ snap: BatterySnapshot) -> some View {
-        tile(icon: "powerplug", tint: PowerAccent.green, title: "Adapter") {
+        tile(icon: "powerplug", tint: PowerAccent.greenText, title: "Adapter") {
             VStack(alignment: .leading, spacing: 1) {
                 Text(snap.adapterWatts.map { "\($0) W" } ?? "—")
                     .font(.system(size: 15, weight: .semibold, design: .rounded))
@@ -60,7 +60,7 @@ struct NerdStatsView: View {
     // MARK: - Tiles
 
     private func temperatureTile(_ snap: BatterySnapshot) -> some View {
-        tile(icon: "thermometer", tint: PowerAccent.orange, title: "Temp") {
+        tile(icon: "thermometer", tint: PowerAccent.orangeText, title: "Temp") {
             VStack(alignment: .leading, spacing: 4) {
                 Text(snap.temperatureC.map { String(format: "%.1f °C", $0) } ?? "—")
                     .font(.system(size: 15, weight: .semibold, design: .rounded))
@@ -136,9 +136,9 @@ struct NerdStatsView: View {
         let health = snap.healthPercent
         let tint: Color = {
             guard let health else { return .secondary }
-            if health >= 88 { return PowerAccent.green }
-            if health >= 80 { return PowerAccent.orange }
-            return PowerAccent.red
+            if health >= 88 { return PowerAccent.greenText }
+            if health >= 80 { return PowerAccent.orangeText }
+            return PowerAccent.redText
         }()
         return tile(icon: "heart.fill", tint: tint, title: "Health") {
             VStack(alignment: .leading, spacing: 1) {
@@ -186,12 +186,12 @@ struct NerdStatsView: View {
         let estimated = estimatedPreAppWh(snap)
         let total = measured + estimated
         let homeHours = total / Self.homeWhPerHour
-        return tile(icon: "bolt.batteryblock.fill", tint: PowerAccent.green, title: "Lifetime energy (est.)") {
+        return tile(icon: "bolt.batteryblock.fill", tint: PowerAccent.greenText, title: "Lifetime energy (est.)") {
             VStack(alignment: .leading, spacing: 3) {
                 Text(energyText(total))
                     .font(.system(size: 16, weight: .bold, design: .rounded))
                     .monospacedDigit()
-                    .foregroundStyle(PowerAccent.green)
+                    .foregroundStyle(PowerAccent.greenText)
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Image(systemName: "house.fill")
                         .font(.system(size: 8))

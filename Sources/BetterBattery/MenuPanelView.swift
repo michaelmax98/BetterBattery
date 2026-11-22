@@ -115,7 +115,7 @@ struct MenuPanelView: View {
     @ViewBuilder
     private var settingsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            SectionHeader(icon: "gearshape.fill", title: "Settings", tint: [.gray], expanded: $showSettingsSection)
+            SectionHeader(icon: "gearshape.fill", title: "Settings", tint: [PowerAccent.neutralText], expanded: $showSettingsSection)
 
             if showSettingsSection {
                 VStack(alignment: .leading, spacing: 8) {
@@ -156,7 +156,7 @@ struct MenuPanelView: View {
     @ViewBuilder
     private var lowBatterySection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            SectionHeader(icon: "battery.25", title: "Low Battery", tint: [PowerAccent.orange], expanded: $showLowBatterySection)
+            SectionHeader(icon: "battery.25", title: "Low Battery", tint: [PowerAccent.orangeText], expanded: $showLowBatterySection)
 
             if showLowBatterySection {
                 VStack(alignment: .leading, spacing: 6) {
@@ -210,7 +210,7 @@ struct MenuPanelView: View {
             SectionHeader(
                 icon: "atom",
                 title: "Stats for Nerds",
-                tint: [PowerAccent.blue, PowerAccent.green],
+                tint: [PowerAccent.blueText, PowerAccent.greenText],
                 expanded: $showNerdStats
             )
 
