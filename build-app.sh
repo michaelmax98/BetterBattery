@@ -6,13 +6,21 @@ cd "$(dirname "$0")"
 
 VERSION="${VERSION:-1.0.0}"
 
-swift build -c release
+# Universal binary so the app runs on both Apple silicon and Intel Macs.
+# Each slice is built separately and merged with lipo, which works with just
+# the Command Line Tools (a multi-arch `swift build` needs full Xcode).
+ARCHS=(arm64 x86_64)
+SLICES=()
+for arch in "${ARCHS[@]}"; do
+  swift build -c release --arch "$arch"
+  SLICES+=(".build/${arch}-apple-macosx/release/BetterBattery")
+done
 
 APP="build/BetterBattery.app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
-cp ".build/release/BetterBattery" "$APP/Contents/MacOS/BetterBattery"
+lipo -create "${SLICES[@]}" -output "$APP/Contents/MacOS/BetterBattery"
 cp "Support/Info.plist" "$APP/Contents/Info.plist"
 
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$APP/Contents/Info.plist"

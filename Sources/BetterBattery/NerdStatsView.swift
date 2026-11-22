@@ -268,8 +268,6 @@ struct NerdStatsView: View {
 private struct SpinningFanIcon: View {
     let rpm: Double
 
-    @State private var angle: Double = 0
-
     /// Seconds per revolution: a lazy turn when the fans are just ticking
     /// over, brisker under load, and never quick enough to strobe against the
     /// glyph's blades.
@@ -281,16 +279,32 @@ private struct SpinningFanIcon: View {
     }
 
     var body: some View {
+        // A new identity per speed restarts the spin cleanly at the new rate.
+        FanSpin(period: period)
+            .id(period)
+    }
+}
+
+/// The rotation itself. The repeating animation is attached with a scoped
+/// `.animation(_:value:)` — never `withAnimation`. A `withAnimation` transaction
+/// also captures every other layout change resolved in the same update (e.g.
+/// the Stats for Nerds section expanding), and SwiftUI then replays *those*
+/// forever too: everything below the grid, and the panel window itself, jumped
+/// once per revolution. Scoped, only this glyph's rotation repeats.
+private struct FanSpin: View {
+    let period: Double
+
+    @State private var spinning = false
+
+    var body: some View {
         Image(systemName: "fanblades")
             .font(.system(size: 15))
             .foregroundStyle(PowerAccent.blue)
-            .rotationEffect(.degrees(angle))
-            // Runs on appear and again whenever the quantised speed changes.
-            .task(id: period) {
-                // A full turn ends where it began, so each repeat is seamless.
-                withAnimation(.linear(duration: period).repeatForever(autoreverses: false)) {
-                    angle += 360
-                }
-            }
+            // A full turn ends where it began, so each repeat is seamless.
+            .rotationEffect(.degrees(spinning ? 360 : 0))
+            .animation(.linear(duration: period).repeatForever(autoreverses: false), value: spinning)
+            // `.task` runs after appearance, outside the section's expand
+            // transaction.
+            .task { spinning = true }
     }
 }
