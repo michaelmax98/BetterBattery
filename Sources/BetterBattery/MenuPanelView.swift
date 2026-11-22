@@ -98,6 +98,7 @@ struct MenuPanelView: View {
         .padding(14)
         .frame(width: 324)
         .onAppear {
+            monitor.isPanelOpen = true
             if canManageLoginItem {
                 launchAtLogin = SMAppService.mainApp.status == .enabled
             }
@@ -107,6 +108,9 @@ struct MenuPanelView: View {
             if warnThreshold < 2 { warnThreshold = 2 }
             if criticalThreshold >= warnThreshold { criticalThreshold = max(1, warnThreshold - 1) }
             if criticalThreshold < 1 { criticalThreshold = 1 }
+        }
+        .onDisappear {
+            monitor.isPanelOpen = false
         }
     }
 

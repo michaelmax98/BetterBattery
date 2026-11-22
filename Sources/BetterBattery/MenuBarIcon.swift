@@ -144,7 +144,10 @@ struct BatteryGlyph: View {
 }
 
 struct MenuBarLabel: View {
-    @ObservedObject var monitor: PowerMonitor
+    /// Not observed: the monitor only invalidates observers while the panel
+    /// is open. The glyph follows `$snapshot`, which fires only on change.
+    let monitor: PowerMonitor
+    @State private var snapshot = PowerMonitor.shared.snapshot
     @AppStorage(DefaultsKey.menuBarDisplayMode) private var displayModeRaw = MenuBarDisplayMode.percent.rawValue
     @AppStorage(DefaultsKey.warnThreshold) private var warnThreshold = 20
     @AppStorage(DefaultsKey.criticalThreshold) private var criticalThreshold = 10
@@ -152,17 +155,20 @@ struct MenuBarLabel: View {
 
     var body: some View {
         let glyph = BatteryGlyph(
-            snapshot: monitor.snapshot,
+            snapshot: snapshot,
             mode: MenuBarDisplayMode(rawValue: displayModeRaw) ?? .percent,
             darkMenuBar: colorScheme == .dark,
             warn: warnThreshold,
             critical: criticalThreshold
         )
-        if let image = renderedImage(for: glyph) {
-            Image(nsImage: image)
-        } else {
-            glyph
+        Group {
+            if let image = renderedImage(for: glyph) {
+                Image(nsImage: image)
+            } else {
+                glyph
+            }
         }
+        .onReceive(monitor.$snapshot) { snapshot = $0 }
     }
 
     private final class RenderCache {

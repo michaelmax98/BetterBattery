@@ -35,10 +35,14 @@ BatteryWatts.
   doesn't restart it, and reuse one quantisation across a panel so everything
   moves together instead of at competing rhythms.
 
-- **Panel-only animation is free at idle.** Everything inside the panel is
-  unrendered while the menu bar item is closed, so easing and spinners cost
-  nothing until someone opens it. That is the *only* reason they're allowed:
-  never move a continuous animation into the glyph/menu bar path, and never
+- **The closed panel must stay idle.** `MenuBarExtra(.window)` never tears
+  the panel down — closing it only hides the window, and SwiftUI keeps
+  updating and laying out hidden content. So `PowerMonitor` invalidates its
+  observers by hand, and only while `isPanelOpen` (set by the panel's
+  `onAppear`/`onDisappear`); panel-only work such as fan reads is skipped
+  while closed. Anything that must update with the panel closed (the glyph,
+  the glow) subscribes to `$snapshot`, which fires only on real changes.
+  Never put a continuous animation in the glyph/menu bar path, and never
   reach for a repeating `Timer` to drive one.
 
 - **Keep per-tick work out of view bodies.** A body inside the panel

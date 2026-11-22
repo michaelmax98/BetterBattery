@@ -49,6 +49,31 @@ struct HealthPoint: Equatable, Codable {
 final class PowerMonitor: ObservableObject {
     static let shared = PowerMonitor()
 
+    /// Panel invalidation, sent by hand — and only while the panel is open.
+    ///
+    /// `MenuBarExtra(.window)` never tears its panel down: closing it just
+    /// hides the window. With the synthesized publisher, every 1 Hz tick
+    /// rebuilt and laid out the whole hidden panel (history chart included),
+    /// which was nearly all of the app's idle CPU. Declaring the publisher as
+    /// a plain subject stops `@Published` from firing it automatically; the
+    /// per-property publishers (`$snapshot`) still work for the menu bar
+    /// glyph and the glow, which must update while the panel is closed.
+    let objectWillChange = PassthroughSubject<Void, Never>()
+
+    /// Set by the panel on appear/disappear. Opening it catches the panel up
+    /// in the same update, so it never shows stale values.
+    var isPanelOpen = false {
+        didSet {
+            guard isPanelOpen != oldValue else { return }
+            if isPanelOpen {
+                ticksSinceFans = 0
+                let readings = SMCFansReader.shared.readFans()
+                if readings != fans { fans = readings }
+                objectWillChange.send()
+            }
+        }
+    }
+
     @Published private(set) var snapshot = BatterySnapshot.empty
     @Published private(set) var history: [PowerSample] = []
     @Published private(set) var healthLog: [HealthPoint] = []
@@ -93,6 +118,10 @@ final class PowerMonitor: ObservableObject {
         let timer = Timer(timeInterval: 1.0, repeats: true) { [weak self] _ in
             self?.refresh()
         }
+        // Leeway lets macOS coalesce this wakeup with others instead of
+        // waking the CPU just for us. Fires stay anchored to the 1 s grid, so
+        // the per-tick energy integration still averages one tick a second.
+        timer.tolerance = 0.1
         RunLoop.main.add(timer, forMode: .common)
         self.timer = timer
     }
@@ -115,6 +144,7 @@ final class PowerMonitor: ObservableObject {
     }
 
     private func refresh() {
+        if isPanelOpen { objectWillChange.send() }
         var snap = BatterySnapshot.empty
         readSmartBattery(into: &snap)
         readPowerSources(into: &snap)
@@ -129,9 +159,15 @@ final class PowerMonitor: ObservableObject {
         } else {
             smoothedWatts = snap.watts
         }
-        snap.smoothedWatts = smoothedWatts ?? snap.watts
+        // Round for display (the hero shows one decimal) so the smoothing
+        // settles to an exact value instead of creeping forever.
+        snap.smoothedWatts = ((smoothedWatts ?? snap.watts) * 100).rounded() / 100
 
-        snapshot = snap
+        // Publish only real changes: the glyph and the glow subscribe to
+        // `$snapshot`, and between hardware updates most ticks are identical.
+        if snap != snapshot {
+            snapshot = snap
+        }
         recordSample(from: snap)
         accumulateLifetime(from: snap)
         refreshFansIfDue()
@@ -157,6 +193,9 @@ final class PowerMonitor: ObservableObject {
     }
 
     private func refreshFansIfDue() {
+        // Fan speeds are only shown in the panel — skip the SMC calls while
+        // it's closed (opening the panel reads them immediately).
+        guard isPanelOpen else { return }
         ticksSinceFans += 1
         guard ticksSinceFans >= 5 else { return }
         ticksSinceFans = 0
